@@ -9,6 +9,11 @@ An MCP server that provides search results using SearXNG as the backend.
 - `SEARXNG_URL` pointing at your instance (example: `http://localhost:8080`)
 - Configuration is centralized in `src/config.ts`
 
+### Optional environment variables
+
+- `SEARXNG_DEFAULT_RESULT_COUNT` &mdash; positive integer that limits how many search results are returned (default: `10`)
+- `SEARXNG_DEFAULT_SAFESEARCH` &mdash; default safe search level when a request does not provide one (`0`, `1`, `2` or `none`, `moderate`, `strict`; default: `moderate`)
+
 ## Install
 
 ```bash

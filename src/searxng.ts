@@ -41,7 +41,6 @@ export async function search(
   if (params.safesearch) {
     searchParams.set("safesearch", params.safesearch);
   }
-
   url.search = searchParams.toString();
 
   const response = await fetch(url.toString());
