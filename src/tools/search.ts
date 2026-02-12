@@ -1,8 +1,16 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
+import type { AppConfig, SafeSearchLevel } from "../config.js";
+import { normalizeSafeSearchValue } from "../config.js";
 import { search } from "../searxng.js";
 import type { SearxngInfobox, SearxngSearchResponse } from "../types.js";
+
+const safeSearchSchema = z.union([
+  z.enum(["0", "1", "2"]),
+  z.enum(["none", "moderate", "strict"]),
+  z.number().int().min(0).max(2),
+]);
 
 const searchSchema = {
   query: z.string(),
@@ -11,7 +19,8 @@ const searchSchema = {
   language: z.string().optional(),
   time_range: z.enum(["day", "month", "year"]).optional(),
   pageno: z.number().int().min(1).default(1),
-  safesearch: z.enum(["0", "1", "2"]).optional(),
+  safesearch: safeSearchSchema.optional(),
+  results: z.number().int().min(1).optional(),
 };
 
 function formatInfobox(infobox: SearxngInfobox): string[] {
@@ -85,21 +94,49 @@ function formatSearchResponse(response: SearxngSearchResponse): string {
   return lines.join("\n");
 }
 
-export function registerSearchTool(server: McpServer, baseUrl: string): void {
-  server.tool("search", searchSchema, async (input) => {
-    try {
-      const response = await search(baseUrl, input);
-      const text = formatSearchResponse(response);
-      return {
-        content: [{ type: "text", text }],
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown search error";
-      return {
-        isError: true,
-        content: [{ type: "text", text: message }],
-      };
-    }
-  });
+export function registerSearchTool(
+  server: McpServer,
+  config: AppConfig,
+): void {
+  const { baseUrl, defaultResultCount, defaultSafeSearch } = config;
+  server.registerTool(
+    "search",
+    {
+      description: "Run a web search via SearXNG",
+      inputSchema: searchSchema,
+    },
+    async (input) => {
+      try {
+        const { safesearch, results, ...searchInput } = input;
+
+        const resolvedSafeSearch: SafeSearchLevel = normalizeSafeSearchValue(
+          safesearch,
+          defaultSafeSearch,
+          "safesearch",
+        );
+
+        const resultLimit = results ?? defaultResultCount;
+
+        const response = await search(baseUrl, {
+          ...searchInput,
+          safesearch: resolvedSafeSearch.toString() as "0" | "1" | "2",
+        });
+        const limitedResponse: SearxngSearchResponse = {
+          ...response,
+          results: response.results?.slice(0, resultLimit),
+        };
+        const text = formatSearchResponse(limitedResponse);
+        return {
+          content: [{ type: "text", text }],
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown search error";
+        return {
+          isError: true,
+          content: [{ type: "text", text: message }],
+        };
+      }
+    },
+  );
 }

@@ -53,20 +53,27 @@ function formatConfigResponse(config: SearxngConfigResponse): string {
 }
 
 export function registerConfigTool(server: McpServer, baseUrl: string): void {
-  server.tool("config", {}, async () => {
-    try {
-      const response = await getConfig(baseUrl);
-      const text = formatConfigResponse(response);
-      return {
-        content: [{ type: "text", text }],
-      };
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown config error";
-      return {
-        isError: true,
-        content: [{ type: "text", text: message }],
-      };
-    }
-  });
+  server.registerTool(
+    "config",
+    {
+      description: "Retrieve the current SearXNG instance configuration",
+      inputSchema: emptySchema,
+    },
+    async () => {
+      try {
+        const response = await getConfig(baseUrl);
+        const text = formatConfigResponse(response);
+        return {
+          content: [{ type: "text", text }],
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unknown config error";
+        return {
+          isError: true,
+          content: [{ type: "text", text: message }],
+        };
+      }
+    },
+  );
 }
