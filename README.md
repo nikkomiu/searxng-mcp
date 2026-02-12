@@ -7,6 +7,7 @@ An MCP server that provides search results using SearXNG as the backend.
 - Bun installed
 - A SearXNG instance with JSON enabled (`json` in `search.formats`)
 - `SEARXNG_URL` pointing at your instance (example: `http://localhost:8080`)
+- Configuration is centralized in `src/config.ts`
 
 ## Install
 

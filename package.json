@@ -6,10 +6,12 @@
     "start": "bun run src/index.ts",
     "build": "bun build src/index.ts --compile --outfile dist/searxng-mcp",
     "type-check": "tsc --noEmit",
-    "lint": "biome check src/"
+    "lint": "biome check src/",
+    "format": "biome format ./src"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "pino": "^9.6.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
